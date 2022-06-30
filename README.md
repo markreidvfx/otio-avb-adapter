@@ -7,6 +7,26 @@ OpenTimelineIO Avid Bin (AVB) Adapter
 
 This adapter uses [pyavb](https://github.com/markreidvfx/pyavb) for reading AVB files
 
+Feature Matrix
+--------------
+
+| Feature                  | Read  | Write |
+| -------                  | ----  | ----- |
+| Single Track of Clips    |  ✔   |   ✖   |
+| Multiple Video Tracks    |  ✔   |   ✖   |
+| Audio Tracks & Clips     |  ✔   |   ✖   |
+| Gap/Filler               |  ✔   |   ✖   |
+| Markers                  |  ✔   |   ✖   |
+| Nesting                  |  ✔   |   ✖   |
+| Transitions              |  ✔   |   ✖   |
+| Audio/Video Effects      |  ✖   |   ✖   |
+| Linear Speed Effects     |  ✖   |   ✖   |
+| Fancy Speed Effects      |  ✖   |   ✖   |
+| Color Decision List      |  ✖   |   ✖   |
+| Image Sequence Reference |  ✖   |   ✖   |
+
+
+
 Testing for Development
 -----------------------
 
