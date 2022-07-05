@@ -229,7 +229,7 @@ def _marker_color_from_string(color):
     return getattr(otio.schema.MarkerColor, color.upper(), None)
 
 
-def _convert_rgb_to_marker_color(rgb_dict):
+def _convert_rgb_to_marker_color(rgb_list):
     """Returns a matching OTIO marker color for a given AAF color string.
 
     Adapted from `get_nearest_otio_color()` in the `xges.py` adapter.
@@ -252,9 +252,9 @@ def _convert_rgb_to_marker_color(rgb_dict):
     }
 
     # convert from UInt to float
-    red = float(rgb_dict["red"]) / 65535.0
-    green = float(rgb_dict["green"]) / 65535.0
-    blue = float(rgb_dict["blue"]) / 65535.0
+    red = float(rgb_list[0]) / 65535.0
+    green = float(rgb_list[1]) / 65535.0
+    blue = float(rgb_list[2]) / 65535.0
     rgb_float = (red, green, blue)
 
     # check for exact match
@@ -890,10 +890,12 @@ def _transcribe_motion_effect(item, parents, metadata, edit_rate, indent):
     # output_format = item.attributes.get('_MFX_OUTPUT_FORMAT', None)
     ratio = item.get('speed_ratio', None)
 
-    for param in item.param_list:
-        if param.uuid == _PARAM_SPEED_OFFSET_MAP_U_ID:
-            offset_map = param
-            interpolation = param.control_track.interp
+    # TODO: some retimes can have no param_list?
+    if item.param_list:
+        for param in item.param_list:
+            if param.uuid == _PARAM_SPEED_OFFSET_MAP_U_ID:
+                offset_map = param
+                interpolation = param.control_track.interp
 
     if interpolation == 'LinearInterp':
         points = []
