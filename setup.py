@@ -21,7 +21,7 @@ setuptools.setup(
     # Replace url with your repo
     url="https://github.com/markreidvfx/otio-avb-adapter",
     platforms='any',
-    packages=['otio_avb_adapter'],
+    packages=setuptools.find_packages(where='src'),
     package_dir={'': 'src'},
     entry_points={
         "opentimelineio.plugins": "otio_avb_adapter = otio_avb_adapter"
