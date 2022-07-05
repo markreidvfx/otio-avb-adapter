@@ -44,23 +44,6 @@ debug = False
 
 # If enabled, output recursive traversal info of _transcribe() method.
 _TRANSCRIBE_DEBUG = False
-
-_INTERPOLATION_MAP = {
-    2: 'ConstantInterp',
-    3: 'LinearInterp',
-    5: 'AvidBezierInterpolator',
-    6: 'AvidCubicInterpolator',
-}
-
-_PER_POINT_MAP = {
-    5: 'PP_IN_TANGENT_POS_U',
-    6: 'PP_IN_TANGENT_VAL_U',
-    7: 'PP_OUT_TANGENT_POS_U',
-    8: 'PP_OUT_TANGENT_VAL_U',
-    9: 'PP_TANGENT_MODE_U',
-    14: 'PP_BASE_FRAME_U',
-}
-
 _PARAM_SPEED_OFFSET_MAP_U_ID = UUID("8d56827d-847e-11d5-935a-50f857c10000")
 
 
@@ -178,8 +161,18 @@ def _transcribe_property(prop, owner=None):
         for value in prop:
             result.append(_transcribe_property(value, prop))
         return result
+    elif isinstance(prop, avb.components.ParamClip):
+        result = _transcribe_property(prop.property_data, prop)
+        result['interpolation'] = prop.interp
+        return result
+    elif isinstance(prop, avb.components.ParamControlPoint):
+        result = _transcribe_property(prop.property_data, prop)
+        result['time'] = prop.time
+        return result
     elif isinstance(prop, avb.core.AVBObject):
         result = _transcribe_property(prop.property_data, prop)
+        if hasattr(prop, 'name'):
+            result['name'] = prop.name
         return result
     elif isinstance(prop, UUID):
         return str(prop)
@@ -900,7 +893,7 @@ def _transcribe_motion_effect(item, parents, metadata, edit_rate, indent):
     for param in item.param_list:
         if param.uuid == _PARAM_SPEED_OFFSET_MAP_U_ID:
             offset_map = param
-            interpolation = _INTERPOLATION_MAP[param.control_track.interp_kind]
+            interpolation = param.control_track.interp
 
     if interpolation == 'LinearInterp':
         points = []
