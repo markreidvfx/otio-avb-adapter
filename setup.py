@@ -20,7 +20,9 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     # Replace url with your repo
     url="https://github.com/markreidvfx/otio-avb-adapter",
-    packages=setuptools.find_packages(),
+    platforms='any',
+    packages=['otio_avb_adapter'],
+    package_dir={'': 'src'},
     entry_points={
         "opentimelineio.plugins": "otio_avb_adapter = otio_avb_adapter"
     },
@@ -41,6 +43,8 @@ setuptools.setup(
             "twine"
         ]
     },
+    python_requires='>=2.7, !=3.0.*, !=3.1.*, !=3.2.*,' + \
+                    '!=3.3.*, !=3.4.*, !=3.5.*, !=3.6.*',
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
