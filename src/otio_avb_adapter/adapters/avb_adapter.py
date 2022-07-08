@@ -422,8 +422,8 @@ def _transcribe(item, parents, edit_rate, indent=0):
     metadata = {}
     markers = []
 
-    metadata["Name"] = _get_name(item)
-    metadata["ClassName"] = _get_class_name(item)
+    metadata["name"] = _get_name(item)
+    metadata["class_name"] = _get_class_name(item)
 
     if hasattr(item, "edit_rate"):
         edit_rate = float(item.edit_rate)
@@ -520,7 +520,7 @@ def _transcribe(item, parents, edit_rate, indent=0):
 
         # store source mob usage to allow OTIO pipelines to adapt downstream
         # example: pipeline code adjusting source_range and name for subclips only
-        metadata["SourceMobUsage"] = clip_usage or ""
+        metadata["usage"] = clip_usage or ""
 
         # Evidently the last mob is the one with the timecode
         ref_chain = _walk_reference_chain(item, 0, [])
@@ -573,8 +573,8 @@ def _transcribe(item, parents, edit_rate, indent=0):
                 mastermobs.append(mob)
 
         if name:
-            metadata["Name"] = name
-            result.name = metadata["Name"]
+            metadata["name"] = name
+            result.name = metadata["name"]
 
         mastermob = mastermobs[0] if mastermobs else None
 
@@ -768,7 +768,7 @@ def _transcribe(item, parents, edit_rate, indent=0):
 
     # If we didn't get a name yet, use the one we have in metadata
     if not result.name:
-        result.name = metadata["Name"]
+        result.name = metadata["name"]
 
     # AVB stores markers with component relative offsets
     # this converts them to media reference relative offsets

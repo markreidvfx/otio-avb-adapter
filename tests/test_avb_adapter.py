@@ -974,7 +974,7 @@ class AVBReaderTests(unittest.TestCase):
         subclip_usages = {"Subclip.BREATH": "subclip"}
         for clip in subclip_timeline.each_clip():
             self.assertEqual(
-                clip.metadata.get("AVB", {}).get("SourceMobUsage"),
+                clip.metadata.get("AVB", {}).get("usage"),
                 subclip_usages[clip.name]
             )
 
