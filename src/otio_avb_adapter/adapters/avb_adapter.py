@@ -554,9 +554,12 @@ def _transcribe(item, parents, edit_rate, indent=0):
                         media_start = track_tc
                         media_edit_rate = tc_rate
 
+        # NOTE: duration is in the edit rate of the source clip
+        # and start_time is in edit rate of the source media
+        # need to further test this
         result.source_range = otio.opentime.TimeRange(
             otio.opentime.RationalTime(source_start, media_edit_rate),
-            otio.opentime.RationalTime(source_length, media_edit_rate)
+            otio.opentime.RationalTime(source_length, edit_rate)
         )
 
         mastermobs = []
@@ -621,8 +624,8 @@ def _transcribe(item, parents, edit_rate, indent=0):
                 media = otio.schema.MissingReference()
 
             media.available_range = otio.opentime.TimeRange(
-                otio.opentime.RationalTime(media_start, edit_rate),
-                otio.opentime.RationalTime(media_length, edit_rate)
+                otio.opentime.RationalTime(media_start, media_edit_rate),
+                otio.opentime.RationalTime(media_length, media_edit_rate)
             )
 
             # Copy the metadata from the master into the media_reference
