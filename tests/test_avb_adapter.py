@@ -1233,20 +1233,21 @@ class AVBReaderTests(unittest.TestCase):
                     all_markers[(i, item.name)] = markers
         self.assertEqual(all_markers, expected_markers)
 
-    def SKIP_test_keyframed_properties(self):
+    def test_keyframed_properties(self):
         def get_expected_dict(timeline):
             expected = []
             for clip in timeline.each_child(descended_from_type=otio.schema.Clip):
                 for effect in clip.effects:
                     props = {}
-                    parameters = effect.metadata.get("AAF", {}).get("Parameters", {})
+                    parameters = effect.metadata.get("AVB", {}).get("param_list", {})
                     for paramName, paramValue in parameters.items():
+                        value = paramValue.get("value")
                         try:
-                            is_animated = "_avb_keyframed_property" in paramValue
+                            is_animated = "_avb_keyframed_property" in value
                         except (TypeError, KeyError):
                             is_animated = False
                         try:
-                            baked_count = len(paramValue["keyframe_baked_values"])
+                            baked_count = len(value["keyframe_baked_values"])
                         except (TypeError, KeyError):
                             baked_count = None
                         props[paramName] = {"keyframed": is_animated,
@@ -1263,9 +1264,6 @@ class AVBReaderTests(unittest.TestCase):
         expected_unbaked = [
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1283,9 +1281,6 @@ class AVBReaderTests(unittest.TestCase):
             },
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1305,9 +1300,6 @@ class AVBReaderTests(unittest.TestCase):
             },
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1326,60 +1318,40 @@ class AVBReaderTests(unittest.TestCase):
                 "Vergence": {"baked_sample_count": None, "keyframed": True},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": None,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": None, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": None,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": None,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": None, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": None,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": None,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": None, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": None,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": None,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": None, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": None,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": None,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": None, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": None,
                                              "keyframed": True},
@@ -1387,9 +1359,6 @@ class AVBReaderTests(unittest.TestCase):
             },
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1412,9 +1381,6 @@ class AVBReaderTests(unittest.TestCase):
         expected_baked = [
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1432,9 +1398,6 @@ class AVBReaderTests(unittest.TestCase):
             },
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1454,9 +1417,6 @@ class AVBReaderTests(unittest.TestCase):
             },
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},
@@ -1475,60 +1435,40 @@ class AVBReaderTests(unittest.TestCase):
                 "Vergence": {"baked_sample_count": 116, "keyframed": True},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": 276,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": 276, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": 276,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": 182,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": 182, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": 182,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": 219,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": 219, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": 219,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": 193,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": 193, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": 193,
                                              "keyframed": True},
                 "SpeedRatio": {"baked_sample_count": None, "keyframed": False},
             },
             {
-                "AvidMotionInputFormat": {"baked_sample_count": None,
-                                          "keyframed": False},
-                "AvidMotionOutputFormat": {"baked_sample_count": None,
-                                           "keyframed": False},
-                "AvidMotionPulldown": {"baked_sample_count": None, "keyframed": False},
-                "AvidPhase": {"baked_sample_count": None, "keyframed": False},
+                "PARAM_PULLDOWN_PHASE_U": {"baked_sample_count": 241,
+                                           "keyframed": True},
                 "PARAM_SPEED_MAP_U": {"baked_sample_count": 241, "keyframed": True},
                 "PARAM_SPEED_OFFSET_MAP_U": {"baked_sample_count": 241,
                                              "keyframed": True},
@@ -1536,9 +1476,6 @@ class AVBReaderTests(unittest.TestCase):
             },
             {
                 "AFX_FIXED_ASPECT_U": {"baked_sample_count": None, "keyframed": False},
-                "AvidEffectID": {"baked_sample_count": None, "keyframed": False},
-                "AvidParameterByteOrder": {"baked_sample_count": None,
-                                           "keyframed": False},
                 "DVE_BORDER_ENABLED_U": {"baked_sample_count": None,
                                          "keyframed": False},
                 "DVE_DEFOCUS_MODE_U": {"baked_sample_count": None, "keyframed": False},

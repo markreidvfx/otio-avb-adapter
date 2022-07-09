@@ -46,6 +46,9 @@ debug = False
 _TRANSCRIBE_DEBUG = False
 _PARAM_SPEED_OFFSET_MAP_U_ID = UUID("8d56827d-847e-11d5-935a-50f857c10000")
 
+# bake keyframed parameter
+_BAKE_KEYFRAMED_PROPERTIES_VALUES = False
+
 
 def _avb_pretty_value(value):
     if isinstance(value, bytearray):
@@ -141,6 +144,53 @@ def _get_name(item):
     return _get_class_name(item)
 
 
+def _transcribe_parameter(param):
+    result = {}
+    name = None
+    if hasattr(param, 'name'):
+        name = param.name
+    if not name and hasattr(param, "parameter_name"):
+        name = param.parameter_name
+
+    name = name or str(param.uuid)
+    result['uuid'] = str(param.uuid)
+
+    control_track = param.get("control_track", None)
+    if control_track and control_track.control_points:
+        control_points = []
+
+        # TODO: flatten if len(control_points) == 1 ?
+        for control_point in control_track.control_points:
+            # Some values cannot be transcribed yet
+            control_points.append(
+                [
+                    control_point.time,
+                    _transcribe_property(control_point.value),
+                ]
+            )
+
+        baked_values = None
+        if _BAKE_KEYFRAMED_PROPERTIES_VALUES:
+            baked_values = []
+
+            for t in range(0, control_track.length):
+                baked_values.append([float(t), control_track.value_at(t)])
+
+        value_dict = {
+            "_avb_keyframed_property": True,
+            "keyframe_values": control_points,
+            "keyframe_interpolation": control_track.interp,
+            "keyframe_baked_values": baked_values
+        }
+
+        result['value'] = value_dict
+    elif param.value_type_name == 'reference':
+        result['value'] = _transcribe_property(param.value, param)
+    else:
+        result['value'] = param.value
+    return name, result
+
+
 def _transcribe_property(prop, owner=None):
     # XXX: The unicode type doesn't exist in Python 3 (all strings are unicode)
     # so we have to use type(u"") which works in both Python 2 and 3.
@@ -156,23 +206,25 @@ def _transcribe_property(prop, owner=None):
                 continue
             result[key] = _transcribe_property(value, prop)
         return result
+    elif isinstance(prop, avb.attributes.ParameterList):
+        result = {}
+        for param in prop:
+            name, value = _transcribe_parameter(param)
+            result[name] = value
+        return result
     elif isinstance(prop, (avb.core.AVBRefList, list, tuple)):
         result = []
         for value in prop:
             result.append(_transcribe_property(value, prop))
         return result
-    elif isinstance(prop, avb.components.ParamClip):
-        result = _transcribe_property(prop.property_data, prop)
-        result['interpolation'] = prop.interp
-        return result
-    elif isinstance(prop, avb.components.ParamControlPoint):
-        result = _transcribe_property(prop.property_data, prop)
-        result['time'] = prop.time
-        return result
     elif isinstance(prop, avb.core.AVBObject):
         result = _transcribe_property(prop.property_data, prop)
+        name = None
         if hasattr(prop, 'name'):
-            result['name'] = prop.name
+            name = prop.name
+        if name:
+            result['name'] = name
+        result['class_name'] = prop.__class__.__name__
         return result
     elif isinstance(prop, UUID):
         return str(prop)
@@ -1287,7 +1339,8 @@ def _get_mobs_for_transcription(content):
 def read_from_file(
     filepath,
     simplify=True,
-    transcribe_log=False
+    transcribe_log=False,
+    bake_keyframed_properties=False,
 ):
     """Reads AVB content from `filepath` and outputs an OTIO timeline object.
 
@@ -1295,6 +1348,8 @@ def read_from_file(
         filepath (str): AVB filepath
         simplify (bool, optional): simplify timeline structure by stripping empty items
         transcribe_log (bool, optional): log activity as items are getting transcribed
+        bake_keyframed_properties (bool, optional): bakes animated property values
+                                                    for each frame in a source clip
     Returns:
         otio.schema.Timeline
 
@@ -1303,8 +1358,9 @@ def read_from_file(
     # Note that a global 'switch' is used in order to avoid
     # passing another argument around in the _transcribe() method.
 
-    global _TRANSCRIBE_DEBUG
+    global _TRANSCRIBE_DEBUG, _BAKE_KEYFRAMED_PROPERTIES_VALUES
     _TRANSCRIBE_DEBUG = transcribe_log
+    _BAKE_KEYFRAMED_PROPERTIES_VALUES = bake_keyframed_properties
 
     with avb.open(filepath) as avb_file:
         # TODO: check if there is additional bin data that might be useful

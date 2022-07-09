@@ -33,7 +33,7 @@ setuptools.setup(
     },
     install_requires=[
         "OpenTimelineIO>=0.14.1",
-        "pyavb>=1.2.0",
+        "pyavb>=1.3.0",
     ],
     extras_require={
         "dev": [
