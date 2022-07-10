@@ -25,8 +25,8 @@ try:
     import collections.abc as collections_abc
 except ImportError:
     import collections as collections_abc
-import fractions
 import opentimelineio as otio
+from opentimelineio.opentime import RationalTime
 
 lib_path = os.environ.get("OTIO_AVB_PYTHON_LIB")
 if lib_path and lib_path not in sys.path:
@@ -348,7 +348,7 @@ def _walk_reference_chain(item, time, results):
     if item is None:
         return results
 
-    results.append([time, item])
+    results.append([RationalTime(time, item.edit_rate), item])
 
     if isinstance(item, avb.components.SourceClip):
 
@@ -356,8 +356,9 @@ def _walk_reference_chain(item, time, results):
         track = item.track
 
         if track:
-            results.append([item.start_time + time, mob])
-            results.append([item.start_time + time, track])
+            r_time = RationalTime(item.start_time + time, item.edit_rate)
+            results.append([r_time, mob])
+            results.append([r_time, track])
             # TODO: check for this affects anything
             if hasattr(track, 'start_pos'):
                 raise AVBAdapterError("start_pos not handles, sample please")
@@ -404,7 +405,7 @@ def _walk_reference_chain(item, time, results):
 
             r = _walk_reference_chain(track.component, time, [])
             if r and isinstance(r[-1][1], avb.components.SourceClip):
-                results.append([time, track])
+                results.append([RationalTime(time, item.edit_rate), track])
                 results.extend(r)
                 return results
 
@@ -412,7 +413,7 @@ def _walk_reference_chain(item, time, results):
         for track in item.tracks:
             r = _walk_reference_chain(track.component, time, [])
             if r:
-                results.append([time, track])
+                results.append([RationalTime(time, item.edit_rate), track])
                 results.extend(r)
                 return r
 
@@ -428,7 +429,16 @@ def _walk_reference_chain(item, time, results):
 
 def _extract_timecode_info(source_mob, start_time):
 
+    # Please note, timecode and frame rate are not the same thing!
+    # Timecode is a way to label frames in a recording and
+    # frame rate is the speed at which images have been
+    # recorded or are played back. Timecode should NOT be treated as
+    # a unit of time but rather a frame index. Fortunately AVB stores
+    # timecode as a frame offset.
+
     # TODO: need to find sample with multiple timecode samples
+
+    assert isinstance(start_time, RationalTime)
     for track in source_mob.tracks:
         if track.component.media_kind == 'timecode':
 
@@ -441,22 +451,27 @@ def _extract_timecode_info(source_mob, start_time):
 
                 # start timecode is the first timecode sample
                 timecode, _ = component.nearest_component_at_time(0)
-                track_tc = timecode.start
+                track_tc = RationalTime(timecode.start, timecode.edit_rate)
 
                 # source timecode is nearest timecode sample
-                tc, tc_offset = component.nearest_component_at_time(start_time)
-                source_tc = tc.start + start_time - tc_offset
+                scale_time = start_time.value_rescaled_to(component.edit_rate)
+                tc, tc_offset = component.nearest_component_at_time(scale_time)
 
-                return track_tc, source_tc, timecode.fps
+                tc_offset = RationalTime(tc_offset, tc.edit_rate)
+                tc_start = RationalTime(tc.start, tc.edit_rate)
+
+                source_tc = tc_start + start_time - tc_offset
+
+                return track_tc, source_tc
 
             elif isinstance(track.component, avb.components.Timecode):
                 timecode = track.component
-                track_tc = timecode.start
+                track_tc = RationalTime(timecode.start, timecode.edit_rate)
                 source_tc = track_tc + start_time
 
-                return track_tc, source_tc, timecode.fps
+                return track_tc, source_tc
 
-    return None, None, None
+    return None, None
 
 
 def _add_child(parent, child, source):
@@ -579,12 +594,11 @@ def _transcribe(item, parents, edit_rate, indent=0):
         mobs = [mob for start, mob in ref_chain
                 if isinstance(mob, avb.trackgroups.Composition)]
 
-        source_start = item.start_time
-        source_length = item.length
+        source_start = RationalTime(item.start_time, item.edit_rate)
+        source_length = RationalTime(item.length, item.edit_rate)
 
-        media_start = 0
-        media_length = item.length
-        media_edit_rate = edit_rate
+        media_start = RationalTime(0, item.edit_rate)
+        media_length = source_length
 
         source_mob = None
         for start_time, comp in ref_chain:
@@ -594,24 +608,19 @@ def _transcribe(item, parents, edit_rate, indent=0):
 
             if isinstance(comp, avb.components.SourceClip):
                 source_start = start_time
-                media_start = comp.start_time
-                media_length = comp.length
-                media_edit_rate = comp.edit_rate
+                media_start = RationalTime(comp.start_time, comp.edit_rate)
+                media_length = RationalTime(comp.length, comp.edit_rate)
 
                 if source_mob:
-                    track_tc, source_tc, tc_rate = _extract_timecode_info(source_mob,
-                                                                          start_time)
-                    if track_tc is not None:
-                        source_start = source_tc
-                        media_start = track_tc
-                        media_edit_rate = tc_rate
+                    track_tc_start, source_tc_start = _extract_timecode_info(source_mob,
+                                                                             start_time)
+                    if track_tc_start is not None:
+                        source_start = source_tc_start
+                        media_start = track_tc_start
 
-        # NOTE: duration is in the edit rate of the source clip
-        # and start_time is in edit rate of the source media
-        # need to further test this
         result.source_range = otio.opentime.TimeRange(
-            otio.opentime.RationalTime(source_start, media_edit_rate),
-            otio.opentime.RationalTime(source_length, edit_rate)
+            source_start,
+            source_length,
         )
 
         mastermobs = []
@@ -676,8 +685,8 @@ def _transcribe(item, parents, edit_rate, indent=0):
                 media = otio.schema.MissingReference()
 
             media.available_range = otio.opentime.TimeRange(
-                otio.opentime.RationalTime(media_start, media_edit_rate),
-                otio.opentime.RationalTime(media_length, media_edit_rate)
+                media_start,
+                media_length,
             )
 
             # Copy the metadata from the master into the media_reference
@@ -890,17 +899,12 @@ def _find_timecode_track_start(track):
     if not isinstance(track.component, avb.components.Timecode):
         return
 
-    edit_rate = fractions.Fraction(track.component.fps)
+    edit_rate = track.component.edit_rate
     start = track.component.start
 
-    if edit_rate.denominator == 1:
-        rate = edit_rate.numerator
-    else:
-        rate = float(edit_rate)
-
     return otio.opentime.RationalTime(
-        value=int(start),
-        rate=rate,
+        value=start,
+        rate=edit_rate,
     )
 
 

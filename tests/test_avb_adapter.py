@@ -298,11 +298,10 @@ class AVBReaderTests(unittest.TestCase):
             timeline.global_start_time
         )
 
-    def skip_test_avb_global_start_time_NTSC_DFTC(self):
+    def test_avb_global_start_time_NTSC_DFTC(self):
         timeline = otio.adapters.read_from_file(FPS2997_DFTC_PATH)
-        # TODO : I don't understand this test
         self.assertEqual(
-            otio.opentime.from_timecode("05:00:00;00", rate=(30000.0 / 1001)),
+            otio.opentime.from_timecode("05:00:00;00", rate=29.97),
             timeline.global_start_time
         )
 
@@ -861,10 +860,9 @@ class AVBReaderTests(unittest.TestCase):
         tl = otio.adapters.read_from_file(FPS30_CLIP_PATH)
         self.assertEqual(tl.duration().rate, 30)
 
-    def skip_test_2997fps(self):
-        # TODO not sure whats up with this
+    def test_2997fps(self):
         tl = otio.adapters.read_from_file(FPS2997_CLIP_PATH)
-        self.assertEqual(tl.duration().rate, 30000 / 1001.0)
+        self.assertEqual(tl.duration().rate, 29.97)
 
     def test_utf8_names(self):
         # NOTE: AAF to AVB convert in MC resulted in different for name
